@@ -1,0 +1,48 @@
+---
+
+- name: Install PostgreSQL packages (RedHat)
+  become: true
+  ansible.builtin.dnf:
+    name: "{{ postgres_packages_redhat }}"
+    state: present
+  when: ansible_facts.os_family == "RedHat"
+
+- name: Install PostgreSQL packages (Debian)
+  become: true
+  ansible.builtin.apt:
+    name: "{{ postgres_packages_debian }}"
+    state: present
+    update_cache: true
+  when: ansible_facts.os_family == "Debian"
+
+- name: "include FreeIPA features"
+  import_tasks: freeipa.yml
+  when: postgres_freeipa and not postgres_is_standby
+
+- name: "set-up primary"
+  import_tasks: setup_primary.yml
+  when: not postgres_is_standby and postgres_replica_password
+
+- name: "set-up replication"
+  import_tasks: setup_replica.yml
+  when: postgres_is_standby
+
+- name: Ensure PostgreSQL config is correct
+  become: true
+  ansible.builtin.template:
+    src: postgresql.conf.j2
+    dest: "{{ postgres_data_path }}/postgresql.conf"
+    owner: postgres
+    group: postgres
+    mode: '0600'
+    setype: postgresql_db_t
+  notify:
+    - Restart postgresql
+
+- name: Ensure service is set to run automatically
+  become: true
+  ansible.builtin.systemd:
+    name: postgresql
+    enabled: true
+    state: started
+

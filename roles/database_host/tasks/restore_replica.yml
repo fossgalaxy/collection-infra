@@ -1,0 +1,81 @@
+---
+
+# EXTREME DANGER!
+# This will remove the postgres cluster dir from the replica - do not run on primary!
+
+- name: Safety catch for replica rebuild
+  ansible.builtin.assert:
+    that:
+      - postgres_is_standby | bool
+      - postgres_allow_replica_reinit | default(false) | bool
+    fail_msg: >-
+      Refusing to rebuild replica unless postgres_is_standby=true and
+      postgres_allow_replica_reinit=true.
+  changed_when: false
+
+- name: Stop PostgreSQL before replica rebuild
+  become: true
+  ansible.builtin.systemd:
+    name: postgresql
+    state: stopped
+
+- name: Ensure replica is set-up with pgpass
+  become: true
+  no_log: true
+  ansible.builtin.copy:
+    content: "{{ postgres_primary }}:*:replication:{{ postgres_replica_user }}:{{ postgres_replica_password }}\n"
+    dest: "/var/lib/pgsql/.replica-pass"
+    owner: postgres
+    group: postgres
+    mode: "0600"
+
+- name: Ensure PostgreSQL data folder is empty
+  become: true
+  ansible.builtin.file:
+    path: "{{ postgres_data_path }}"
+    state: absent
+
+- name: Restore backup from primary
+  become: true
+  become_user: postgres
+  no_log: true
+  ansible.builtin.command:
+    argv:
+      - pg_basebackup
+      - --no-password
+      - -h
+      - "{{ postgres_primary }}"
+      - -U
+      - "{{ postgres_replica_user }}"
+      - -D
+      - "{{ postgres_data_path }}"
+  environment:
+    PGPASSFILE: /var/lib/pgsql/.replica-pass
+
+- name: Restore SELinux context
+  become: true
+  ansible.builtin.command:
+    argv: ["restorecon", "-R", "-v", "{{ postgres_data_path }}"]
+  when:
+    - ansible_facts.selinux is defined
+    - ansible_facts.selinux.status == "enabled"
+
+- name: Ensure standby file is present
+  become: true
+  ansible.builtin.file:
+    path: "{{ postgres_data_path }}/standby.signal"
+    state: touch
+    owner: postgres
+    group: postgres
+    mode: '0600'
+    setype: postgresql_db_t
+    modification_time: preserve
+    access_time: preserve
+  notify:
+    - Restart postgresql
+
+- name: Ensure PostgreSQL is started
+  become: true
+  ansible.builtin.systemd:
+    name: postgresql
+    state: started

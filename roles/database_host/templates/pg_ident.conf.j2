@@ -1,0 +1,6 @@
+# {{ ansible_managed }}
+
+# MAPNAME       SYSTEM-USERNAME         PG-USERNAME
+{% if postgres_freeipa %}
+freeipa         /^(.*)@{{ postgres_freeipa_realm }}$ \1
+{% endif %}

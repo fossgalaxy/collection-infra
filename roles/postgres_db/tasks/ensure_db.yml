@@ -1,0 +1,69 @@
+---
+
+- name: Validate required pg_* variables
+  ansible.builtin.assert:
+    that:
+      - pg_host is string and pg_host | length > 0
+      - pg_db is string and pg_db | length > 0
+      - pg_owner is string and pg_owner | length > 0
+      - pg_app_user is string and pg_app_user | length > 0
+      - pg_app_password is string and pg_app_password | length > 0
+    fail_msg: "postgres_db role: required pg_* variables are missing/empty."
+  changed_when: false
+
+- name: Ensure database and roles exist
+  block:
+    - name: Check if server is standby
+      community.postgresql.postgresql_query:
+        db: "{{ pg_login_db }}"
+        port: "{{ pg_port }}"
+        query: "SELECT pg_is_in_recovery() AS in_recovery"
+      register: _pg_recovery
+      changed_when: false
+      when: pg_require_primary | bool
+
+    - name: Refuse to modify standby
+      ansible.builtin.assert:
+        that:
+          - not _pg_recovery.query_result[0].in_recovery
+        fail_msg: "pg_host appears to be a standby (pg_is_in_recovery=true). Point pg_host at the writable primary."
+      changed_when: false
+      when: pg_require_primary | bool
+
+    - name: Ensure owner role exists
+      community.postgresql.postgresql_user:
+        name: "{{ pg_owner }}"
+        role_attr_flags: NOLOGIN
+        state: present
+
+    - name: Ensure database exists
+      community.postgresql.postgresql_db:
+        name: "{{ pg_db }}"
+        owner: "{{ pg_owner }}"
+        state: present
+
+    - name: Ensure extensions are enabled
+      community.postgresql.postgresql_ext:
+        name: "{{ item }}"
+        db: "{{ pg_db }}"
+        schema: "{{ pg_schema }}"
+        state: present
+      loop: "{{ pg_extensions }}"
+
+    - name: Ensure app role exists
+      no_log: true
+      community.postgresql.postgresql_user:
+        name: "{{ pg_app_user }}"
+        password: "{{ pg_app_password }}"
+        state: present
+
+    - name: Grant owner role to app role (inherit privileges for migrations)
+      community.postgresql.postgresql_membership:
+        group: "{{ pg_owner }}"
+        target_roles: ["{{ pg_app_user }}"]
+        state: present
+      when: pg_app_inherits_owner | bool
+
+  delegate_to: "{{ pg_host }}"
+  become: true
+  become_user: postgres

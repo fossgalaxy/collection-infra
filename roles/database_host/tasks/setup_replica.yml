@@ -1,0 +1,30 @@
+---
+
+# EXTREME DANGER!
+# This will remove the postgres cluster dir from the replica - do not run on primary!
+
+- name: Ensure replica is set-up with pgpass
+  become: true
+  ansible.builtin.copy:
+    content: "{{ postgres_primary }}:*:replication:{{ postgres_replica_user }}:{{ postgres_replica_password }}\n"
+    dest: "/var/lib/pgsql/.replica-pass"
+    owner: postgres
+    group: postgres
+    mode: "0600"
+
+- name: Ensure standby file is present
+  become: true
+  ansible.builtin.file:
+    path: "{{ postgres_data_path }}/standby.signal"
+    state: touch
+    owner: postgres
+    group: postgres
+    mode: '0600'
+    setype: postgresql_db_t
+    modification_time: preserve
+    access_time: preserve
+  when: postgres_is_standby
+  notify:
+    - Restart postgresql
+
+

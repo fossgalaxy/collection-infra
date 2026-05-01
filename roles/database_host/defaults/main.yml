@@ -1,0 +1,24 @@
+---
+postgres_data_path: /var/lib/pgsql/data
+postgres_hba_path: "{{ postgres_data_path }}/pg_hba.conf"
+
+postgres_packages_redhat: 
+  - postgresql-server
+  - postgresql-contrib
+  - python3-psycopg2
+  
+postgres_packages_debian:
+  - postgresql
+  - postgresql-contrib
+  - python3-psycopg2
+
+postgres_is_standby: false
+postgres_replica_user: rep_ha
+
+# freeipa integration
+postgres_freeipa: false
+postgres_freeipa_realm: "IPA\.EXAMPLE\.COM" # FIXME: escape in template
+postgres_gss_service: "postgres/{{ inventory_hostname }}"
+postgres_keytab: "{{ postgres_data_path }}/pg.keytab"
+
+postgres_manage_net: "192.168.1.0/24"

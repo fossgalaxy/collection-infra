@@ -1,0 +1,52 @@
+---
+
+- name: check if PostgreSQL has been setup
+  become: true
+  ansible.builtin.stat:
+    path: "{{ postgres_hba_path }}"
+  register: postgres_data
+
+- name: "initialize PostgreSQL"
+  become: true
+  shell: "postgresql-setup initdb"
+  when: not postgres_data.stat.exists
+
+- name: Ensure replication account exists
+  become: true
+  become_user: postgres
+  community.postgresql.postgresql_user:
+    name: "{{ postgres_replica_user }}"
+    password: "{{ postgres_replica_password }}"
+    role_attr_flags: REPLICATION
+
+- name: Ensure standby file is absent
+  become: true
+  ansible.builtin.file:
+    path: "{{ postgres_data_path }}/standby.signal"
+    state: absent
+  notify:
+    - Restart postgresql
+
+- name: allow db connections for replication
+  become: true
+  community.postgresql.postgresql_pg_hba:
+    dest: "{{ postgres_hba_path }}"
+    databases: replication
+    contype: host
+    source: "192.168.0.0/16"
+    method: "scram-sha-256"
+    users: "{{ postgres_replica_user }}"
+
+- name: allow db connections from virtual machine bridge
+  become: true
+  community.postgresql.postgresql_pg_hba:
+    dest: "{{ postgres_hba_path }}"
+    contype: host
+    source: 192.168.40.0/24
+    method: scram-sha-256
+
+- name: Ensure PostgreSQL is running
+  become: true
+  ansible.builtin.systemd_service:
+    name: postgresql
+    state: started

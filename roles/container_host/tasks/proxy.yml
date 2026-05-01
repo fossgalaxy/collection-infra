@@ -1,0 +1,35 @@
+---
+
+- name: Ensure configuration for reverse proxy exists
+  become: true
+  containers.podman.podman_volume:
+    state: quadlet
+    name: caddy_data
+
+- name: Ensure caddy network exists
+  become: true
+  containers.podman.podman_network:
+    name: caddy-ingress
+    state: quadlet
+
+- name: Ensure caddy container exists
+  become: true
+  containers.podman.podman_container:
+    name: caddy
+    image: "docker.io/lucaslorentz/caddy-docker-proxy:ci-alpine"
+    state: quadlet
+    ports:
+      - "80:80"
+    volumes:
+      - "caddy_data.volume:/data"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    network:
+      - "caddy-ingress.network"
+    env:
+      CADDY_INGRESS_NETWORKS: caddy-ingress
+      CADDY_DOCKER_NO_SCOPE: true
+    quadlet_options:
+      - "SecurityLabelDisable=true"
+      - |
+        [Install]
+        WantedBy=default.target

@@ -1,0 +1,50 @@
+---
+
+- name: Ensure PostgreSQL service exists
+  no_log: true
+  freeipa.ansible_freeipa.ipaservice:
+    ipaadmin_password: "{{ ipaadmin_password }}"
+    name: "{{ postgres_gss_service }}"
+    state: present
+
+- name: Login to FreeIPA servers
+  become: true
+  no_log: true
+  ansible.builtin.shell: |
+    set -euo pipefail
+    echo "{{ ipaadmin_password }}" | kinit "{{ ipaadmin_principal }}"
+
+- name: Get keytab
+  become: true
+  community.general.ipa_getkeytab:
+    path: "{{ postgres_data_path }}/pg.keytab"
+    principal: "{{ postgres_gss_service }}"
+
+- name: Ensure keytab permissions are correct
+  become: true
+  ansible.builtin.file:
+    path: "{{ postgres_data_path }}/pg.keytab"
+    owner: postgres
+    group: postgres
+    mode: '0600'
+
+- name: Ensure PostgreSQL configuration is correct
+  become: true
+  ansible.builtin.template:
+    src: pg_ident.conf.j2
+    dest: "{{ postgres_data_path }}/pg_ident.conf"
+    owner: postgres
+    group: postgres
+    mode: '0600'
+    setype: postgresql_db_t
+  notify:
+    - Restart postgresql
+
+- name: allow database connections from management network
+  become: true
+  community.postgresql.postgresql_pg_hba:
+    dest: "{{ postgres_hba_path }}"
+    contype: host
+    source: "{{ postgres_manage_net }}"
+    method: gss
+    options: map=freeipa

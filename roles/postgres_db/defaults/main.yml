@@ -1,0 +1,11 @@
+---
+pg_login_db: postgres
+pg_port: 5432
+pg_extensions: []
+pg_schema: public
+
+# default for self-hosted apps
+pg_app_inherits_owner: true
+
+# safety: refuse to run if target is standby
+pg_require_primary: true
