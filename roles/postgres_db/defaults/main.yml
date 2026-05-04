@@ -1,4 +1,14 @@
 ---
+pg_data_path: /var/lib/pgsql/data
+pg_hba_path: "{{ pg_data_path }}/pg_hba.conf"
+
+pg_manage_hba: true
+pg_hba_method: "scram-sha-256"
+pg_hba_source: "samenet"
+pg_hba_conntype: "host"
+
+pg_remote: false
+
 pg_login_db: postgres
 pg_port: 5432
 pg_extensions: []

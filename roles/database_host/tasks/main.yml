@@ -53,3 +53,12 @@
     enabled: true
     state: started
 
+- name: Allow remote hosts to connect
+  become: true
+  ansible.posix.firewalld:
+    service: postgresql
+    state: enabled
+    permanent: true
+    immediate: true
+    offline: true
+  when: postgres_firewalld

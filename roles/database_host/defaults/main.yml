@@ -26,6 +26,9 @@ postgres_locale_money: "{{ postgres_locale_default }}"
 postgres_locale_numeric: "{{ postgres_locale_default }}"
 postgres_locale_time: "{{ postgres_locale_default }}"
 
+# manage firewall
+postgres_firewalld: true
+
 # freeipa integration
 postgres_freeipa: false
 postgres_freeipa_realm: ""
