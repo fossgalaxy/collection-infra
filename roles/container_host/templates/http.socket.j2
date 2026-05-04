@@ -1,0 +1,8 @@
+# {{ ansible_managed }}
+[Socket]
+ListenStream=80
+FileDescriptorName=web
+Service={{ podman_traefik_service }}.service
+
+[Install]
+WantedBy=sockets.target

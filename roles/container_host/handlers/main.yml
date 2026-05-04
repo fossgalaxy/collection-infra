@@ -1,0 +1,14 @@
+---
+
+- name: Restart podman
+  become: true
+  ansible.builtin.service:
+    name: podman
+    state: restarted
+
+- name: Restart traefik
+  become: true
+  ansible.builtin.service:
+    daemon_reload: true
+    name: {{ podman_traefik_service }}
+    state: restarted

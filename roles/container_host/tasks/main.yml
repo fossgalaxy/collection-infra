@@ -1,4 +1,8 @@
 ---
 
 - include_tasks: install.yml
-- include_tasks: proxy.yml
+
+- name: "Enable proxy configuration"
+  import_tasks: "proxy_{{ podman_proxy }}.yml"
+  when: podman_proxy is defined
+

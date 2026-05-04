@@ -1,0 +1,18 @@
+---
+
+podman_proxy: traefik
+podman_socket: "/usr/lib/systemd/system/podman.socket"
+
+podman_traefik_tag: "latest"
+podman_traefik_image: "docker.io/library/traefik:{{podman_traefik_tag}}"
+podman_traefik_service: "traefik"
+
+podman_traefik_dir: "/srv/podman/{{ podman_traefik_service }}"
+podman_traefik_conf: "{{ podman_traefik_dir }}/traefik.yml"
+
+podman_traefik_network: "{{ podman_traefik_service }}"
+podman_traefik_http_socket: "http.socket"
+podman_traefik_podman_socket: "podman.socket"
+
+podman_traefik_http_path: "/etc/systemd/system/{{ podman_traefik_http_socket }}"
+

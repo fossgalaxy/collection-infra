@@ -1,0 +1,52 @@
+---
+
+- name: Ensure proxy network exists
+  become: true
+  containers.podman.podman_network:
+    name: "{{ podman_traefik_network }}"
+    state: quadlet
+
+- name: Ensure proxy data directory exists
+  become: true
+  ansible.builtin.file:
+    state: directory
+    name: "{{ podman_traefik_dir }}"
+
+- name: Ensure configuration file exists
+  become: true
+  ansible.builtin.template:
+    src: "traefik.yml.j2"
+    dest: "{{ podman_traefik_conf }}"
+  notify:
+    - Restart traefik
+
+- name: Ensure http socket exists
+  become: true
+  ansible.builtin.template:
+    src: "http.socket.j2"
+    dest: "{{ podman_traefik_http_path }}"
+  notify:
+    - Restart traefik
+
+- name: Ensure proxy container exists
+  become: true
+  containers.podman.podman_container:
+    name: "{{ podman_traefik_service }}"
+    image: "{{ podman_traefik_image }}"
+    state: quadlet
+    volumes:
+      - "{{ podman_traefik_conf }}:/etc/traefik/traefik.yml:Z"
+      - "{{ podman_socket }}:/var/run/docker.sock"
+    network:
+      - "{{ podman_traefik_network }}.network"
+    quadlet_options:
+      - "SecurityLabelDisable=true"
+      - "NoNewPrivileges=true"
+      - "ReadOnly=true"
+      - "Notify=true"
+      - |
+        [Unit]
+        Requires=podman.socket http.socket
+        After=podman.socket http.socket
+  notify:
+    - Restart traefik

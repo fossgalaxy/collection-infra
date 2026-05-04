@@ -1,0 +1,16 @@
+# {{ ansible_managed }}
+api:
+  dashboard: true
+entryPoints:
+  web:
+    address: ":80"
+    forwardedHeaders:
+      trustedIPs:
+        - 127.0.0.1/32
+        - 192.168.0.0/16
+        - 127.16.0.0/12
+        - 10.0.0.0/8
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
