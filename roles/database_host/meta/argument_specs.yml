@@ -1,0 +1,23 @@
+---
+argument_specs:
+  main:
+    short_description: Deploy PostgresSQL cluster node
+    description:
+      - Deploys PostgresSQL as a systemd-managed service.
+      - Optionally configures FreeIPA integration.
+    options:
+      # ---- Core ----
+      postgres_replica_password:
+        type: str
+        required: true
+        description: "Password used for syncing between replicas"
+
+      # ---- Replication ----
+      postgres_is_standby:
+        type: bool
+        description: "Is this postgres server in standby mode?"
+        default: false
+      postgres_replica_user:
+        type: str
+        description: "What account should be used for replication?"
+        default: rep_ha
