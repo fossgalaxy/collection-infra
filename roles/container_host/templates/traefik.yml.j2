@@ -1,6 +1,15 @@
+#jinja2: trim_blocks:False
 # {{ ansible_managed }}
 api:
-  dashboard: true
+  insecure: true
+  dashboard: {{ podman_traefik_dashboard }}
+http:
+  routers:
+    {%- if podman_traefik_dashboard %}
+    dashboard:
+      rule: PathPrefix("/dashboard")
+      service: api@internal
+    {%- endif %}
 entryPoints:
   web:
     address: ":80"
