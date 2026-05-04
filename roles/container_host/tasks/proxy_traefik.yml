@@ -50,3 +50,10 @@
         After=podman.socket http.socket
   notify:
     - Restart traefik
+
+- name: Ensure http socket service is enabled
+  become: true
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+    name: "{{ podman_traefik_http_socket }}"
+    enabled: true
