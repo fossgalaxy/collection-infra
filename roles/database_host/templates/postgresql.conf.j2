@@ -606,7 +606,7 @@ log_truncate_on_rotation = on		# If on, an existing log file with the
 #log_temp_files = -1			# log temporary files equal or larger
 					# than the specified size in kilobytes;
 					# -1 disables, 0 logs all temp files
-log_timezone = 'Europe/London'
+log_timezone = '{{ postgres_timezone }}'
 
 # - Process Title -
 
@@ -720,7 +720,7 @@ log_timezone = 'Europe/London'
 
 datestyle = 'iso, dmy'
 #intervalstyle = 'postgres'
-timezone = 'Europe/London'
+timezone = '{{ postgres_timezone }}'
 #timezone_abbreviations = 'Default'     # Select the set of available time zone
 					# abbreviations.  Currently, there are
 					#   Default
@@ -734,10 +734,10 @@ timezone = 'Europe/London'
 					# encoding
 
 # These settings are initialized by initdb, but they can be changed.
-lc_messages = 'en_GB.UTF-8'		# locale for system error message
-lc_monetary = 'en_GB.UTF-8'		# locale for monetary formatting
-lc_numeric = 'en_GB.UTF-8'		# locale for number formatting
-lc_time = 'en_GB.UTF-8'			# locale for time formatting
+lc_messages = '{{ postgres_locale_messages }}'		# locale for system error message
+lc_monetary = '{{ postgres_locale_money }}'		# locale for monetary formatting
+lc_numeric = '{{ postgres_locale_numeric }}'		# locale for number formatting
+lc_time = '{{ postgres_locale_time }}'			# locale for time formatting
 
 #icu_validation_level = warning		# report ICU locale validation
 					# errors at the given level

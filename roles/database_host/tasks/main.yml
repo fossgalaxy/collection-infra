@@ -15,13 +15,20 @@
     update_cache: true
   when: ansible_facts.os_family == "Debian"
 
+- name: Ensure required locales are available
+  become: true
+  locale_gen:
+    name: "{{ postgres_locale_default }}"
+    state: present
+  when: ansible_facts.os_family == "Debian"
+
 - name: "include FreeIPA features"
   import_tasks: freeipa.yml
   when: postgres_freeipa and not postgres_is_standby
 
 - name: "set-up primary"
   import_tasks: setup_primary.yml
-  when: not postgres_is_standby and postgres_replica_password
+  when: not postgres_is_standby
 
 - name: "set-up replication"
   import_tasks: setup_replica.yml

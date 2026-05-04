@@ -11,6 +11,12 @@
   shell: "postgresql-setup initdb"
   when: not postgres_data.stat.exists
 
+- name: "Start postgresql"
+  become: true
+  ansible.builtin.service:
+    name: postgresql
+    state: started
+
 - name: Ensure replication account exists
   become: true
   become_user: postgres
