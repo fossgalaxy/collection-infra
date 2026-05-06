@@ -3,6 +3,7 @@
 api:
   insecure: true
   dashboard: {{ podman_traefik_dashboard }}
+
 http:
   routers:
     {%- if podman_traefik_dashboard %}
@@ -10,15 +11,33 @@ http:
       rule: PathPrefix("/dashboard")
       service: api@internal
     {%- endif %}
+
 entryPoints:
+  {%- if podman_traefik_http %}
   web:
     address: ":80"
+    {%- if podman_traefik_http_proxies %}
     forwardedHeaders:
       trustedIPs:
-        - 127.0.0.1/32
-        - 192.168.0.0/16
-        - 127.16.0.0/12
-        - 10.0.0.0/8
+      {%- for proxy in podman_traefik_http_proxies %}
+        - {{ proxy }}
+      {%- endfor -%}
+    {% endif %}
+  {% endif %}
+
+  {%- if podman_traefik_https %}
+  websecure:
+    address: ":443"
+    http:
+      tls: {}
+    {% if podman_traefik_https_proxies %}
+    forwardedHeaders:
+      trustedIPs:
+      {%- for proxy in podman_traefik_https_proxies %}
+        - {{ proxy }}
+      {%- endfor -%}
+    {% endif %}
+  {% endif %}
 providers:
   docker:
     endpoint: "unix:///var/run/docker.sock"

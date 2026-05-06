@@ -1,7 +1,7 @@
 # {{ ansible_managed }}
 [Socket]
-ListenStream=80
-FileDescriptorName=web
+ListenStream={{ socket_port }}
+FileDescriptorName={{ socket_fd }}
 Service={{ podman_traefik_service }}.service
 
 [Install]

@@ -23,10 +23,47 @@
 - name: Ensure http socket exists
   become: true
   ansible.builtin.template:
-    src: "http.socket.j2"
+    src: "socket.j2"
     dest: "{{ podman_traefik_http_path }}"
+  vars:
+    socket_port: 80
+    socket_fd: web
+  when: podman_traefik_http
   notify:
     - Restart traefik
+
+- name: Ensure http socket does not exist
+  become: true
+  ansible.builtin.file:
+    state: absent
+    path: "{{ podman_traefik_http_path }}"
+  when: not podman_traefik_http
+
+- name: Ensure https socket exists
+  become: true
+  ansible.builtin.template:
+    src: "socket.j2"
+    dest: "{{ podman_traefik_https_path }}"
+  vars:
+    socket_port: 443
+    socket_fd: websecure
+  when: podman_traefik_https
+  notify:
+    - Restart traefik
+
+- name: Ensure https socket does not exist
+  become: true
+  ansible.builtin.file:
+    state: absent
+    path: "{{ podman_traefik_https_path }}"
+  when: not podman_traefik_https
+
+- name: Ask FreeIPA for certificates
+  ansible.builtin.include_tasks: "tls_freeipa.yml"
+  vars:
+    freeipa_tls_hostname: "{{ item }}"
+  loop: "{{ podman_traefik_https_certs }}"
+  when: podman_traefik_https is defined and podman_traefik_https_provider == 'freeipa'
 
 - name: Ensure proxy container exists
   become: true
@@ -57,3 +94,12 @@
     daemon_reload: true
     name: "{{ podman_traefik_http_socket }}"
     enabled: true
+  when: podman_traefik_http
+
+- name: Ensure podmans socket service is enabled
+  become: true
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+    name: "{{ podman_traefik_http_socket }}"
+    enabled: true
+  when: podman_traefik_https
