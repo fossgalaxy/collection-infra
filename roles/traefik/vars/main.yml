@@ -1,0 +1,7 @@
+---
+
+traefik_volumes: >-
+  {{
+     traefik_volumes_base +
+     (traefik_https | bool | ternary(traefik_volumes_tls, []) )
+  }}

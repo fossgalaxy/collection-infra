@@ -12,44 +12,26 @@
       - python3-ipalib
     state: installed
 
-- name: Check if certificate exists
-  stat:
-    path: "{{ traefik_tls_cert }}"
-  register: cert_status
+- name: Ensure IPA HTTP services exist
+  freeipa.ansible_freeipa.ipaservice:
+    ipaadmin_principal: "{{ traefik_ipa_admin_user }}"
+    ipaadmin_password: "{{ traefik_ipa_admin_pass }}"
+    name: "HTTP/{{ item.hostname }}"
+    host: "{{ traefik_https_hostname }}"
+    skip_host_check: true
+  loop: "{{ traefik_https_certificates }}"
 
-- stat:
-    path: "{{ traefik_tls_key }}"
-  register: key_status
+- name: Generate certificates
+  ansible.builtin.include_tasks: cert_freeipa.yml
+  loop: "{{ traefik_https_certificates }}"
+  loop_control:
+    loop_var: cert
+    label: "{{ cert.hostname }}"
 
-- name: Generate certificate
-  when: not cert_status.stat.exists or not key_status.stat.exists
-  become: True
-  block:
-    - name: Ensure private key for certificate exists
-      community.crypto.openssl_privatekey:
-        path: "{{ traefik_tls_key }}"
-
-    - name: Generate certificate signing request
-      community.crypto.openssl_csr:
-        return_content: true
-        path: "{{ traefik_tls_csr }}"
-        privatekey_path: "{{ traefik_tls_key }}"
-        common_name: "{{ traefik_https_hostname }}"
-        subject_alt_name: "{{ traefik_https_alts }}"
-      register: freeipa_csr
-
-    - name: Request a certificate from FreeIPA
-      freeipa.ansible_freeipa.ipacert:
-        ipaadmin_principal: "{{ traefik_ipa_admin_user }}"
-        ipaadmin_password: "{{ traefik_ipa_admin_pass }}"
-        state: requested
-        csr: "{{ traefik_tls_csr }}"
-        chain: true
-        certificate_out: "{{ traefik_tls_cert }}"
-        principal: "{{ traefik_https_principal }}"
-      register: freeipa_cert
-  always:
-    - name: Ensure csr is cleaned up
-      ansible.builtin.file:
-        path: "{{ traefik_tls_csr }}"
-        state: absent
+- name: Ensure tls configuration file exists
+  become: true
+  ansible.builtin.template:
+    src: "tls.yml.j2"
+    dest: "{{ traefik_dir_dynamic }}/tls.yml"
+  notify:
+    - Restart traefik

@@ -1,0 +1,20 @@
+---
+
+- name: Ensure firewalld is managed for Traefik
+  when: traefik_manage_firewalld | bool
+  become: true
+  block:
+
+    - name: Ensure HTTP service is allowed when enabled
+      ansible.posix.firewalld:
+        service: http
+        permanent: true
+        state: "{{ traefik_http | bool | ternary('enabled', 'disabled') }}"
+        immediate: true
+
+    - name: Ensure HTTPS service is allowed when enabled
+      ansible.posix.firewalld:
+        service: https
+        permanent: true
+        state: "{{ traefik_https | bool | ternary('enabled', 'disabled') }}"
+        immediate: true

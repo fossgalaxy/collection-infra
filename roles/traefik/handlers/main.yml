@@ -4,5 +4,5 @@
   become: true
   ansible.builtin.service:
     daemon_reload: true
-    name: traefik
+    name: "{{ traefik_service }}"
     state: restarted

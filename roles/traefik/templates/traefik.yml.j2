@@ -1,7 +1,6 @@
 #jinja2: trim_blocks:False
 # {{ ansible_managed }}
 api:
-  insecure: true
   dashboard: {{ traefik_dashboard }}
 
 http:
@@ -42,3 +41,6 @@ providers:
   docker:
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
