@@ -1,0 +1,6 @@
+tls:
+  certificates:
+{% for cert in traefik_https_certificates %}
+    - certFile: "{{ traefik_bind_https }}/{{ cert.hostname }}.crt"
+      keyFile: "{{ traefik_bind_https }}/{{ cert.hostname }}.key"
+{% endfor %}

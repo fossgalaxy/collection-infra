@@ -4,6 +4,9 @@
 traefik_engine: "podman"
 traefik_podman_socket: "{{ podman_socket | default('/run/podman/podman.sock') }}"
 
+# firewalld integration
+traefik_manage_firewalld: true
+
 # traefik oci image
 traefik_tag: "latest"
 traefik_image: "docker.io/library/traefik:{{traefik_tag}}"
@@ -15,17 +18,18 @@ traefik_dashboard: false
 
 # directories
 traefik_dir: "/srv/podman/{{ traefik_service }}"
+traefik_dir_dynamic: "{{ traefik_dir }}/dynamic"
 traefik_conf: "{{ traefik_dir }}/traefik.yml"
 
 traefik_systemd_dir: "/etc/systemd/system"
-traefik_tls_dir: "/etc/pki/tls/"
+traefik_tls_dir: "/etc/pki/tls/private"
 
 # http (web)
 traefik_http: true
 traefik_http_socket: "http.socket"
 traefik_http_path: "{{ traefik_systemd_dir }}/{{ traefik_http_socket }}"
 traefik_http_proxies:
-  - 127.0.0.1/32
+  - 172.0.0.1/32
   - 192.168.0.0/16
   - 127.16.0.0/12
   - 10.0.0.0/8
@@ -33,21 +37,29 @@ traefik_http_proxies:
 # https (websecure)
 traefik_https: true
 traefik_https_socket: "https.socket"
-traefik_https_path: "{{ traefil_systemd_dir}}/{{ traefik_https_socket }}"
+traefik_https_path: "{{ traefik_systemd_dir}}/{{ traefik_https_socket }}"
 traefik_https_proxies: "{{ traefik_http_proxies }}"
 
 # TLS integration
-traefik_https_provider: "none"
-traefik_https_hostname: "{{ ansible_host }}"
-traefik_https_principal: "host/{{ traefik_https_hostname }}"
-traefik_https_alts:
-  - "DNS:{{ traefik_https_hostname }}"
+#traefik_https_provider: ""
+traefik_https_hostname: "{{ inventory_hostname }}"
+traefik_https_certificates:
+  - hostname: "{{ traefik_https_hostname }}"
 
 # admin account for interacting with freeipa (if enabled)
 traefik_ipa_admin_user: "{{ ipaadmin_principal|default('admin') }}"
 traefik_ipa_admin_pass: "{{ ipaadmin_password }}"
 
-# TLS paths
-traefik_tls_cert: "{{ traefik_tls_dir }}/certs/{{ traefik_https_hostname }}.pem"
-traefik_tls_key: "{{ traefik_tls_dir }}/private/{{ traefik_https_hostname }}.key"
-traefik_tls_csr: "{{ traefik_tls_dir }}/misc/{{ traefik_https_hostname }}.csr"
+# core volumes
+traefik_bind_https: "/etc/traefik/certs"
+
+traefik_volumes_base:
+  - "{{ traefik_conf }}:/etc/traefik/traefik.yml:Z"
+  - "{{ traefik_dir_dynamic }}:/etc/traefik/dynamic:Z,ro"
+  - "{{ traefik_podman_socket }}:/var/run/docker.sock"
+
+traefik_volumes_tls:
+  - "{{ traefik_tls_dir }}:{{ traefik_bind_https }}:ro"
+
+# extension points
+traefik_extra_volumes: []

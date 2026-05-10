@@ -12,6 +12,12 @@
     state: directory
     name: "{{ traefik_dir }}"
 
+- name: Ensure proxy dynamic directory exists
+  become: true
+  ansible.builtin.file:
+    state: directory
+    name: "{{ traefik_dir_dynamic }}"
+
 - name: Ensure configuration file exists
   become: true
   ansible.builtin.template:
@@ -28,7 +34,8 @@
   vars:
     socket_port: 80
     socket_fd: web
-  when: podman_traefik_http
+    service_name: "{{ traefik_service }}"
+  when: traefik_http
   notify:
     - Restart traefik
 
@@ -37,7 +44,7 @@
   ansible.builtin.file:
     state: absent
     path: "{{ traefik_http_path }}"
-  when: not podman_traefik_http
+  when: not traefik_http
 
 - name: Ensure https socket exists
   become: true
@@ -47,7 +54,8 @@
   vars:
     socket_port: 443
     socket_fd: websecure
-  when: podman_traefik_https
+    service_name: "{{ traefik_service }}"
+  when: traefik_https
   notify:
     - Restart traefik
 
@@ -56,7 +64,7 @@
   ansible.builtin.file:
     state: absent
     path: "{{ traefik_https_path }}"
-  when: not podman_traefik_https
+  when: not traefik_https
 
 - name: Ensure proxy container exists
   become: true
@@ -64,9 +72,7 @@
     name: "{{ traefik_service }}"
     image: "{{ traefik_image }}"
     state: quadlet
-    volumes:
-      - "{{ traefik_conf }}:/etc/traefik/traefik.yml:Z"
-      - "{{ traefik_podman_socket }}:/var/run/docker.sock"
+    volumes: "{{ traefik_volumes + traefik_extra_volumes }}"
     network:
       - "{{ traefik_network }}.network"
     quadlet_options:
@@ -89,7 +95,7 @@
     enabled: true
   when: traefik_http
 
-- name: Ensure podmans socket service is enabled
+- name: Ensure https socket service is enabled
   become: true
   ansible.builtin.systemd_service:
     daemon_reload: true

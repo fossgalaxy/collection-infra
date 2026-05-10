@@ -2,7 +2,7 @@
 [Socket]
 ListenStream={{ socket_port }}
 FileDescriptorName={{ socket_fd }}
-Service={{ podman_traefik_service }}.service
+Service={{ service_name }}.service
 
 [Install]
 WantedBy=sockets.target

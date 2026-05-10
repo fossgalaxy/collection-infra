@@ -1,0 +1,44 @@
+---
+
+- name: Check if certificate exists
+  ansible.builtin.stat:
+    path: "{{ traefik_tls_dir }}/{{ cert.hostname }}.crt"
+  register: cert_stat
+
+- name: Check if key exists
+  ansible.builtin.stat:
+    path: "{{ traefik_tls_dir }}/{{ cert.hostname }}.key"
+  register: key_stat
+
+- name: Generate certificate assets
+  when: not cert_stat.stat.exists or not key_stat.stat.exists
+  become: true
+  block:
+
+    - name: Ensure private key exists
+      community.crypto.openssl_privatekey:
+        path: "{{ traefik_tls_dir }}/{{ cert.hostname }}.key"
+
+    - name: Generate CSR
+      community.crypto.openssl_csr:
+        path: "{{ traefik_tls_dir }}/{{ cert.hostname }}.csr"
+        privatekey_path: "{{ traefik_tls_dir }}/{{ cert.hostname }}.key"
+        common_name: "{{ cert.hostname }}"
+        subject_alt_name:
+          - "DNS:{{ cert.hostname }}"
+
+    - name: Request certificate from FreeIPA
+      freeipa.ansible_freeipa.ipacert:
+        ipaadmin_principal: "{{ traefik_ipa_admin_user }}"
+        ipaadmin_password: "{{ traefik_ipa_admin_pass }}"
+        state: requested
+        csr_file: "{{ traefik_tls_dir }}/{{ cert.hostname }}.csr"
+        chain: true
+        certificate_out: "{{ traefik_tls_dir }}/{{ cert.hostname }}.crt"
+        principal: "HTTP/{{ cert.hostname }}"
+
+  always:
+    - name: Remove CSR
+      ansible.builtin.file:
+        path: "{{ traefik_tls_dir }}/{{ cert.hostname }}.csr"
+        state: absent
