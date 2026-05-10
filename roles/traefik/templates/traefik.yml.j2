@@ -2,38 +2,38 @@
 # {{ ansible_managed }}
 api:
   insecure: true
-  dashboard: {{ podman_traefik_dashboard }}
+  dashboard: {{ traefik_dashboard }}
 
 http:
   routers:
-    {%- if podman_traefik_dashboard %}
+    {%- if traefik_dashboard %}
     dashboard:
       rule: PathPrefix("/dashboard")
       service: api@internal
     {%- endif %}
 
 entryPoints:
-  {%- if podman_traefik_http %}
+  {%- if traefik_http %}
   web:
     address: ":80"
-    {%- if podman_traefik_http_proxies %}
+    {%- if traefik_http_proxies %}
     forwardedHeaders:
       trustedIPs:
-      {%- for proxy in podman_traefik_http_proxies %}
+      {%- for proxy in traefik_http_proxies %}
         - {{ proxy }}
       {%- endfor -%}
     {% endif %}
   {% endif %}
 
-  {%- if podman_traefik_https %}
+  {%- if traefik_https %}
   websecure:
     address: ":443"
     http:
       tls: {}
-    {% if podman_traefik_https_proxies %}
+    {% if traefik_https_proxies %}
     forwardedHeaders:
       trustedIPs:
-      {%- for proxy in podman_traefik_https_proxies %}
+      {%- for proxy in traefik_https_proxies %}
         - {{ proxy }}
       {%- endfor -%}
     {% endif %}

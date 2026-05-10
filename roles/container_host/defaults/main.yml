@@ -1,45 +1,5 @@
 ---
 
-podman_proxy: traefik
 podman_socket: "/run/podman/podman.sock"
+podman_bind_dir: "/srv/podman/"
 
-# admin account for interacting with freeipa (if enabled)
-podman_ipa_admin_user: "{{ ipaadmin_principal|default('admin') }}"
-podman_ipa_admin_pass: "{{ ipaadmin_password }}"
-
-# traefik integration
-podman_traefik_tag: "latest"
-podman_traefik_image: "docker.io/library/traefik:{{podman_traefik_tag}}"
-podman_traefik_service: "traefik"
-
-podman_traefik_dashboard: false
-
-podman_traefik_dir: "/srv/podman/{{ podman_traefik_service }}"
-podman_traefik_conf: "{{ podman_traefik_dir }}/traefik.yml"
-
-podman_traefik_network: "{{ podman_traefik_service }}"
-podman_traefik_podman_socket: "podman.socket"
-
-# traefik HTTP (web)
-podman_traefik_http: true
-podman_traefik_http_socket: "http.socket"
-podman_traefik_http_path: "/etc/systemd/system/{{ podman_traefik_http_socket }}"
-podman_traefik_http_proxies:
-  - 127.0.0.1/32
-  - 192.168.0.0/16
-  - 127.16.0.0/12
-  - 10.0.0.0/8
-
-# traefik HTTPS (websecure)
-podman_traefik_https: false
-podman_traefik_https_socket: "https.socket"
-podman_traefik_https_path: "/etc/systemd/system/{{ podman_traefik_https_socket }}"
-podman_traefik_https_proxies: "{{ podman_traefik_http_proxies }}"
-
-# TLS stuff
-podman_traefik_https_provider: "none"
-podman_traefik_https_certs: []
-
-tls_cert_path: /etc/pki/tls/certs/
-tls_key_path: /etc/pki/tls/private/
-tls_csr_path: /etc/pki/tls/misc/
