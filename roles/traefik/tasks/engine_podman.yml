@@ -3,20 +3,20 @@
 - name: Ensure proxy network exists
   become: true
   containers.podman.podman_network:
-    name: "{{ podman_traefik_network }}"
+    name: "{{ traefik_network }}"
     state: quadlet
 
 - name: Ensure proxy data directory exists
   become: true
   ansible.builtin.file:
     state: directory
-    name: "{{ podman_traefik_dir }}"
+    name: "{{ traefik_dir }}"
 
 - name: Ensure configuration file exists
   become: true
   ansible.builtin.template:
     src: "traefik.yml.j2"
-    dest: "{{ podman_traefik_conf }}"
+    dest: "{{ traefik_conf }}"
   notify:
     - Restart traefik
 
@@ -24,7 +24,7 @@
   become: true
   ansible.builtin.template:
     src: "socket.j2"
-    dest: "{{ podman_traefik_http_path }}"
+    dest: "{{ traefik_http_path }}"
   vars:
     socket_port: 80
     socket_fd: web
@@ -36,14 +36,14 @@
   become: true
   ansible.builtin.file:
     state: absent
-    path: "{{ podman_traefik_http_path }}"
+    path: "{{ traefik_http_path }}"
   when: not podman_traefik_http
 
 - name: Ensure https socket exists
   become: true
   ansible.builtin.template:
     src: "socket.j2"
-    dest: "{{ podman_traefik_https_path }}"
+    dest: "{{ traefik_https_path }}"
   vars:
     socket_port: 443
     socket_fd: websecure
@@ -55,27 +55,20 @@
   become: true
   ansible.builtin.file:
     state: absent
-    path: "{{ podman_traefik_https_path }}"
+    path: "{{ traefik_https_path }}"
   when: not podman_traefik_https
-
-- name: Ask FreeIPA for certificates
-  ansible.builtin.include_tasks: "tls_freeipa.yml"
-  vars:
-    freeipa_tls_hostname: "{{ item }}"
-  loop: "{{ podman_traefik_https_certs }}"
-  when: podman_traefik_https is defined and podman_traefik_https_provider == 'freeipa'
 
 - name: Ensure proxy container exists
   become: true
   containers.podman.podman_container:
-    name: "{{ podman_traefik_service }}"
-    image: "{{ podman_traefik_image }}"
+    name: "{{ traefik_service }}"
+    image: "{{ traefik_image }}"
     state: quadlet
     volumes:
-      - "{{ podman_traefik_conf }}:/etc/traefik/traefik.yml:Z"
-      - "{{ podman_socket }}:/var/run/docker.sock"
+      - "{{ traefik_conf }}:/etc/traefik/traefik.yml:Z"
+      - "{{ traefik_podman_socket }}:/var/run/docker.sock"
     network:
-      - "{{ podman_traefik_network }}.network"
+      - "{{ traefik_network }}.network"
     quadlet_options:
       - "SecurityLabelDisable=true"
       - "NoNewPrivileges=true"
@@ -83,8 +76,8 @@
       - "Notify=true"
       - |
         [Unit]
-        Requires=podman.socket http.socket
-        After=podman.socket http.socket
+        Requires=podman.socket
+        After=podman.socket
   notify:
     - Restart traefik
 
@@ -92,14 +85,14 @@
   become: true
   ansible.builtin.systemd_service:
     daemon_reload: true
-    name: "{{ podman_traefik_http_socket }}"
+    name: "{{ traefik_http_socket }}"
     enabled: true
-  when: podman_traefik_http
+  when: traefik_http
 
 - name: Ensure podmans socket service is enabled
   become: true
   ansible.builtin.systemd_service:
     daemon_reload: true
-    name: "{{ podman_traefik_http_socket }}"
+    name: "{{ traefik_https_socket }}"
     enabled: true
-  when: podman_traefik_https
+  when: traefik_https

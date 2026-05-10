@@ -1,0 +1,9 @@
+---
+
+- name: "Reverse proxy configuration"
+  import_tasks: "engine_{{ traefik_engine }}.yml"
+  when: traefik_engine is defined
+
+- name: "TLS provider integration"
+  import_tasks: "tls_{{ traefik_https_provider }}.yml"
+  when: traefik_https_provider is defined and traefik_https_provider != "none"

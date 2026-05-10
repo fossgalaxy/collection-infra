@@ -1,0 +1,29 @@
+---
+argument_specs:
+  main:
+    short_description: Deploy traefik ingress
+    description:
+      - Deploys traefik as a systemd-managed service.
+      - Optionally configures FreeIPA integration.
+    options:
+      # ---- Core ----
+      traefik_engine:
+        type: str
+        default: "podman"
+        description: "Password used for syncing between replicas"
+        
+      # ---- Web ----
+      traefik_http:
+        type: bool
+        description: "Should we enable the http endpoint?"
+        default: true
+
+      # ---- TLS ----
+      traefik_https:
+        type: bool
+        description: "Should we enable TLS?"
+        default: true
+      traefik_https_provider:
+        type: str
+        description: "What provider should be used for generating certs?"
+        default: "none"
