@@ -1,7 +1,7 @@
 ---
 
-- name: Restart postgresql
+- name: Restart PostgreSQL
   become: true
   ansible.builtin.service:
-    name: postgresql
+    name: "{{ postgres_service }}"
     state: restarted

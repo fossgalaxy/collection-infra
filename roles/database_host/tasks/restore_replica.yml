@@ -16,7 +16,7 @@
 - name: Stop PostgreSQL before replica rebuild
   become: true
   ansible.builtin.systemd:
-    name: postgresql
+    name: "{{ postgres_service }}"
     state: stopped
 
 - name: Ensure replica is set-up with pgpass
@@ -52,6 +52,13 @@
   environment:
     PGPASSFILE: /var/lib/pgsql/.replica-pass
 
+- name: Remove temporary .pgpass after bootstrap
+  become: true
+  file:
+    path: "/var/lib/pgsql/.replica-pass"
+    state: absent
+  when: postgres_allow_replica_reinit | default(false) | bool
+
 - name: Restore SELinux context
   become: true
   ansible.builtin.command:
@@ -72,10 +79,10 @@
     modification_time: preserve
     access_time: preserve
   notify:
-    - Restart postgresql
+    - Restart PostgreSQL
 
 - name: Ensure PostgreSQL is started
   become: true
   ansible.builtin.systemd:
-    name: postgresql
+    name: "{{ postgres_service }}"
     state: started

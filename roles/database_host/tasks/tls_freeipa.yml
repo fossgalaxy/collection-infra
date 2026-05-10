@@ -1,0 +1,95 @@
+---
+
+- name: "Fail if FreeIPA features are enabled but host is not enrolled"
+  ansible.builtin.assert:
+    that:
+      - postgres_freeipa_enrolled | bool
+    fail_msg: >
+      FreeIPA TLS integration requested (postgres_tls_provider=freeipa) but this host is not enrolled in IPA.
+      Please enroll the host in FreeIPA or disable FreeIPA integration.
+  changed_when: false
+
+- name: Ensure TLS cert exists
+  become: true
+  ansible.builtin.stat:
+    path: "{{ postgres_tls_cert }}"
+  register: pg_cert
+
+- name: Ensure TLS key exists
+  become: true
+  ansible.builtin.stat:
+    path: "{{ postgres_tls_key }}"
+  register: pg_key
+
+- name: Determine if TLS cert must be (re)issued
+  ansible.builtin.set_fact:
+    postgres_tls_needs_cert: >-
+      {{
+        (not pg_cert.stat.exists)
+        or
+        ((ansible_facts['date_time'].epoch | int) - (pg_cert.stat.mtime | int) > 60*60*24*30)
+        or
+        (not pg_key.stat.exists)
+      }}
+
+- name: Ensure PostgreSQL service exists
+  no_log: true
+  freeipa.ansible_freeipa.ipaservice:
+    ipaadmin_principal: "{{ postgres_freeipa_admin_user }}"
+    ipaadmin_password: "{{ ipaadmin_password }}"
+    name: "{{ postgres_tls_ipa_service_final }}"
+    state: present
+
+- name: Generate certificate assets
+  when: postgres_tls_needs_cert
+  become: true
+  block:
+    - name: Create private key if missing
+      community.crypto.openssl_privatekey:
+        path: "{{ postgres_tls_key }}"
+        owner: postgres
+        group: postgres
+        mode: "0600"
+
+    - name: Generate CSR for PostgreSQL TLS cert
+      community.crypto.openssl_csr:
+        path: "{{ postgres_tls_data_path }}/postgres.csr"
+        privatekey_path: "{{ postgres_tls_key }}"
+        common_name: "{{ postgres_tls_hostname }}"
+        subject_alt_name: "{{ postgres_tls_sans | default([]) }}"
+        return_content: true
+      register: pg_csr
+
+    - name: Request certificate from FreeIPA
+      freeipa.ansible_freeipa.ipacert:
+        ipaadmin_principal: "{{ postgres_freeipa_admin_user }}"
+        ipaadmin_password: "{{ postgres_freeipa_admin_pass }}"
+        state: requested
+        csr_file: "{{ postgres_tls_data_path }}/postgres.csr"
+        certificate_out: "{{ postgres_tls_cert }}"
+        principal: "{{ postgres_tls_ipa_service_final }}"
+        chain: true
+      notify:
+        - Restart PostgreSQL
+
+  always:
+    - name: Remove CSR
+      ansible.builtin.file:
+        path: "{{ postgres_tls_data_path }}/postgres.csr"
+        state: absent
+
+- name: Ensure TLS key permissions are correct
+  become: true
+  ansible.builtin.file:
+    path: "{{ postgres_tls_key }}"
+    owner: postgres
+    group: postgres
+    mode: "0600"
+
+- name: Ensure TLS cert permissions are correct
+  become: true
+  ansible.builtin.file:
+    path: "{{ postgres_tls_cert }}"
+    owner: postgres
+    group: postgres
+    mode: "0644"
