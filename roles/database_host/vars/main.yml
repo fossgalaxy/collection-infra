@@ -1,0 +1,8 @@
+---
+
+postgres_tls_ipa_service_final: >-
+  {{
+    postgres_tls_ipa_service
+    if postgres_tls_ipa_service | length > 0
+    else "postgres/" ~ postgres_tls_hostname
+  }}

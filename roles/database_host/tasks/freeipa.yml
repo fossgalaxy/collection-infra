@@ -1,5 +1,14 @@
 ---
 
+- name: "Fail if FreeIPA features are enabled but host is not enrolled"
+  ansible.builtin.assert:
+    that:
+      - postgres_freeipa_enrolled | bool
+    fail_msg: >
+      FreeIPA integration requested (postgres_freeipa=true) but this host is not enrolled in IPA.
+      Please enroll the host in FreeIPA or disable FreeIPA integration.
+  changed_when: false
+
 - name: Ensure PostgreSQL service exists
   no_log: true
   freeipa.ansible_freeipa.ipaservice:

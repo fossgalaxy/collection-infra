@@ -15,7 +15,19 @@ postgres_packages_debian:
   - python3-psycopg2
 
 postgres_is_standby: false
+
+# replication connections
 postgres_replica_user: rep_ha
+postgres_replica_auth: scram-sha-256
+postgres_replica_source: "192.168.0.0/16"
+postgres_replica_contype: "{{ 'hostssl' if postgres_tls | bool else 'host' }}"
+
+# application connections
+postgres_app_contype: "{{ 'hostssl' if postgres_tls | bool else 'host' }}"
+postgres_app_source: "192.168.40.0/24"
+postgres_app_method: scram-sha-256
+
+postgres_service: "postgresql"
 
 # locales
 postgres_timezone: "Europe/London"
@@ -31,8 +43,27 @@ postgres_firewalld: true
 
 # freeipa integration
 postgres_freeipa: false
+
+# admin account for interacting with freeipa (if enabled)
+postgres_freeipa_admin_user: "{{ ipaadmin_principal|default('admin') }}"
+postgres_freeipa_admin_pass: "{{ ipaadmin_password|default('') }}"
+
 postgres_freeipa_realm: ""
 postgres_gss_service: "postgres/{{ inventory_hostname }}"
 postgres_keytab: "{{ postgres_data_path }}/pg.keytab"
 
 postgres_manage_net: "192.168.1.0/24"
+
+# Postgres TLS
+postgres_tls: true
+
+postgres_tls_hostname: "{{ inventory_hostname }}"
+postgres_tls_data_path: "{{ postgres_data_path }}"
+
+postgres_tls_cert: "{{ postgres_tls_data_path }}/server.crt"
+postgres_tls_key: "{{ postgres_tls_data_path }}/server.key"
+postgres_tls_sans:
+  - "DNS:{{ postgres_tls_hostname }}"
+
+postgres_tls_provider: "freeipa"
+postgres_tls_ipa_service: "postgres/{{ postgres_tls_hostname }}"

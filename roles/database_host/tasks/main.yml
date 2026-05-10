@@ -1,5 +1,18 @@
 ---
 
+- name: Check FreeIPA client enrollment
+  ansible.builtin.stat:
+    path: /etc/krb5.keytab
+  register: krb5_keytab
+
+- name: Check FreeIPA default.conf
+  ansible.builtin.stat:
+    path: /etc/ipa/default.conf
+  register: ipa_conf
+
+- set_fact:
+    postgres_freeipa_enrolled: "{{ ipa_conf.stat.exists and krb5_keytab.stat.exists }}"
+
 - name: Install PostgreSQL packages (RedHat)
   become: true
   ansible.builtin.dnf:
@@ -26,6 +39,11 @@
   import_tasks: freeipa.yml
   when: postgres_freeipa and not postgres_is_standby
 
+- name: TLS integration
+  when: postgres_tls | bool
+  block:
+    - include_tasks: "tls_{{ postgres_tls_provider }}.yml"
+
 - name: "set-up primary"
   import_tasks: setup_primary.yml
   when: not postgres_is_standby
@@ -44,12 +62,12 @@
     mode: '0600'
     setype: postgresql_db_t
   notify:
-    - Restart postgresql
+    - Restart PostgreSQL
 
 - name: Ensure service is set to run automatically
   become: true
   ansible.builtin.systemd:
-    name: postgresql
+    name: "{{ postgres_service }}"
     enabled: true
     state: started
 

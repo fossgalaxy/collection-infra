@@ -1,5 +1,13 @@
 ---
 
+- name: Gather IPA enrollment fact
+  ansible.builtin.stat:
+    path: /etc/ipa/default.conf
+  register: ipa_conf
+
+- set_fact:
+    traefik_freeipa_enrolled: "{{ ipa_conf.stat.exists }}"
+
 - name: "Reverse proxy configuration"
   import_tasks: "engine_{{ traefik_engine }}.yml"
   when: traefik_engine is defined

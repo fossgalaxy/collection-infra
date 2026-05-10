@@ -107,21 +107,14 @@ krb_server_keyfile = '{{ postgres_keytab }}'
 
 # - SSL -
 
-#ssl = off
-#ssl_ca_file = ''
-#ssl_cert_file = 'server.crt'
-#ssl_crl_file = ''
-#ssl_crl_dir = ''
-#ssl_key_file = 'server.key'
-#ssl_ciphers = 'HIGH:MEDIUM:+3DES:!aNULL' # allowed SSL ciphers
-#ssl_prefer_server_ciphers = on
-#ssl_ecdh_curve = 'prime256v1'
-#ssl_min_protocol_version = 'TLSv1.2'
-#ssl_max_protocol_version = ''
-#ssl_dh_params_file = ''
-#ssl_passphrase_command = ''
-#ssl_passphrase_command_supports_reload = off
-
+{% if postgres_tls | bool %}
+ssl = on
+ssl_cert_file = '{{ postgres_tls_cert }}'
+ssl_key_file = '{{ postgres_tls_key }}'
+ssl_min_protocol_version = 'TLSv1.2'
+{% else %}
+ssl = off
+{% endif %}
 
 #------------------------------------------------------------------------------
 # RESOURCE USAGE (except WAL)

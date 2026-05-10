@@ -1,11 +1,13 @@
 ---
-pg_data_path: /var/lib/pgsql/data
+pg_data_path: "{{ postgres_data_path | default('/var/lib/pgsql/data') }}"
 pg_hba_path: "{{ pg_data_path }}/pg_hba.conf"
+
+pg_tls: "{{ postgres_tls | default(false) }}"
 
 pg_manage_hba: true
 pg_hba_method: "scram-sha-256"
 pg_hba_source: "samenet"
-pg_hba_conntype: "host"
+pg_hba_conntype: "{{ 'hostssl' if pg_tls | bool else 'host' }}"
 
 pg_remote: false
 
