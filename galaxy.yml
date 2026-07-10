@@ -47,7 +47,7 @@ dependencies: {}
 repository: https://github.com/fossgalaxy/collection-infra
 
 # The URL to any online docs
-#documentation: https://github.com/fossgalaxy/collection-infra
+documentation: https://github.com/fossgalaxy/collection-infra
 
 # The URL to the homepage of the collection/project
 homepage: https://www.fossgalaxy.com
