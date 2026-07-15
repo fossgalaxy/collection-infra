@@ -1,0 +1,16 @@
+---
+
+kc_client_type: "client-secret"
+kc_url: "{{ keycloak_url }}"
+
+kc_validate_certs: "{{ keycloak_validate_certs|default(true) }}"
+
+kc_auth_client: "{{ keycloak_client_id }}"
+kc_auth_url: "{{ kc_url }}"
+kc_auth_realm: "{{ keycloak_auth_realm|default('master') }}"
+kc_auth_user: "{{ keycloak_auth_user|default('kc_admin') }}"
+kc_auth_password: "{{ keycloak_auth_password|default('') }}"
+
+# keycloak defaults
+kc_issuer_url: "{{ kc_url }}/realms/{{ kc_realm }}"
+kc_autodiscover_url: "{{ kc_url }}/realms/{{ kc_realm }}/.well-known/openid-configuration"
