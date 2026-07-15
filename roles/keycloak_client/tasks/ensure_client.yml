@@ -1,0 +1,60 @@
+---
+
+- name: Validate required variables
+  ansible.builtin.assert:
+    that:
+      - kc_realm is string and kc_realm | length > 0
+      - kc_root_url is string and kc_root_url | length > 0
+      - kc_client_id is string and kc_client_id | length > 0
+      - kc_client_name is string and kc_client_name | length > 0
+    fail_msg: "keycloak_client role: required kc_* variables are missing/empty."
+  changed_when: false
+
+- name: Ensure client exists
+  delegate_to: localhost
+  block:
+    - name: Ensure client exists
+      community.general.keycloak_client:
+        validate_certs: "{{ kc_validate_certs }}"
+        auth_client_id: "{{ kc_auth_client }}"
+        auth_keycloak_url: "{{ kc_auth_url }}"
+        auth_realm: "{{ kc_auth_realm }}"
+        auth_username: "{{ kc_auth_user }}"
+        auth_password: "{{ kc_auth_password }}"
+        state: present
+        client_id: "{{ kc_client_id }}"
+        client_authenticator_type: "{{ kc_client_type }}"
+        name: "{{ kc_client_name }}"
+        description: "{{ kc_client_desc | default('') }}"
+        public_client: "{{ kc_public_client | default(false) }}"
+        realm: "{{ kc_realm }}"
+        root_url: "{{ kc_root_url }}"
+        redirect_uris: "{{ kc_redirect_uris | default([kc_root_url ~ '/*']) }}"
+      register: kc_client_info
+
+    - name: Validate returned client id
+      ansible.builtin.assert:
+        that:
+          - kc_client_info.end_state is defined
+          - kc_client_info.end_state.id is defined
+        fail_msg: "Keycloak client creation did not return an ID"
+
+    - name: Get the client details
+      community.general.keycloak_clientsecret_info:
+        validate_certs: "{{ kc_validate_certs }}"
+        auth_client_id: "{{ kc_auth_client }}"
+        auth_keycloak_url: "{{ kc_auth_url }}"
+        auth_realm: "{{ kc_auth_realm }}"
+        auth_username: "{{ kc_auth_user }}"
+        auth_password: "{{ kc_auth_password }}"
+        realm: "{{ kc_realm }}"
+        id: "{{ kc_client_info.end_state.id }}"
+      register: kc_client_secret_info
+
+    - name: Export result
+      ansible.builtin.set_fact:
+        "{{ kc_output_var | default('kc_result') }}":
+          client_id: "{{ kc_client_id }}"
+          client_secret: "{{ kc_client_secret_info['clientsecret_info']['value'] }}"
+          issuer_url: "{{ kc_issuer_url }}"
+          autodiscover_url: "{{ kc_autodiscover_url }}"
