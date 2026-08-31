@@ -1,0 +1,12 @@
+---
+- name: Validate container engine
+  ansible.builtin.assert:
+    that:
+      - valkey_container_engine in ['podman']
+    fail_msg: "unsupported container engine: {{ valkey_container_engine }}"
+  changed_when: false
+
+- name: "Reverse proxy configuration"
+  import_tasks: "engine_{{ valkey_container_engine }}.yml"
+  when: valkey_container_engine is defined
+
