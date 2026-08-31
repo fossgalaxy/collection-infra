@@ -14,7 +14,7 @@
 
 - name: "TLS provider integration"
   include_tasks: "tls_{{ traefik_https_provider }}.yml"
-  when: traefik_https_provider is defined and traefik_https_provider | length > 0
+  when: traefik_https and traefik_https_provider is defined and traefik_https_provider | length > 0
 
 - name: Firewalld integration
   ansible.builtin.include_tasks: firewalld.yml
