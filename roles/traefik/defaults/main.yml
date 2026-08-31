@@ -35,7 +35,7 @@ traefik_http_proxies:
   - 10.0.0.0/8
 
 # https (websecure)
-traefik_https: true
+traefik_https: false
 traefik_https_socket: "https.socket"
 traefik_https_path: "{{ traefik_systemd_dir}}/{{ traefik_https_socket }}"
 traefik_https_proxies: "{{ traefik_http_proxies }}"
