@@ -1,0 +1,8 @@
+---
+
+- name: Restart valkey
+  become: true
+  ansible.builtin.service:
+    daemon_reload: true
+    name: "{{ valkey_service }}"
+    state: restarted

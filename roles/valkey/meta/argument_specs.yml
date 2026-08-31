@@ -1,0 +1,12 @@
+---
+argument_specs:
+  main:
+    short_description: Deploy valkey container
+    description:
+      - Deploys valkey as a systemd-managed service.
+    options:
+      # ---- Core ----
+      traefik_container_engine:
+        type: str
+        default: "podman"
+        description: "Container engine to deploy to (defaults to podman with quadlet)"

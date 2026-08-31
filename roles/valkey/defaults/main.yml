@@ -1,0 +1,18 @@
+---
+
+# engine type
+valkey_container_engine: "podman"
+
+# traefik oci image
+valkey_tag: "8.1"
+valkey_image: "docker.io/valkey/valkey:{{ valkey_tag }}"
+valkey_service: "valkey"
+valkey_network: "podman"
+
+valkey_systemd_dir: "/etc/systemd/system"
+
+# valkey extra configuration
+valkey_max_memory: "128mb"
+valkey_max_memory_policy: "volatile-lfu"
+
+# TODO add extention points
