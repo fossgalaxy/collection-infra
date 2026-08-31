@@ -55,7 +55,7 @@ postgres_keytab: "{{ postgres_data_path }}/pg.keytab"
 postgres_manage_net: "192.168.1.0/24"
 
 # Postgres TLS
-postgres_tls: true
+postgres_tls: "{{ postgres_freeipa }}"
 
 postgres_tls_hostname: "{{ inventory_hostname }}"
 postgres_tls_data_path: "{{ postgres_data_path }}"
