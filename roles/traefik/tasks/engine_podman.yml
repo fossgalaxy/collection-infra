@@ -45,6 +45,8 @@
     state: absent
     path: "{{ traefik_http_path }}"
   when: not traefik_http
+  notify:
+    - Restart traefik
 
 - name: Ensure https socket exists
   become: true
@@ -65,6 +67,8 @@
     state: absent
     path: "{{ traefik_https_path }}"
   when: not traefik_https
+  notify:
+    - Restart traefik
 
 - name: Ensure proxy container exists
   become: true
