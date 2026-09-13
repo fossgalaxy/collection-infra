@@ -1,5 +1,7 @@
 ---
 
 podman_socket: "/run/podman/podman.sock"
+
+# where should we keep bind-mounts?
 podman_bind_dir: "/srv/podman/"
 
