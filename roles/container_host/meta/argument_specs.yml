@@ -4,7 +4,6 @@ argument_specs:
     short_description: Deploy podman cluster node
     description:
       - Deploys Podman as a systemd-managed service.
-      - Optionally configures Podman integration.
     options:
       # ---- Core ----
       podman_socket:
