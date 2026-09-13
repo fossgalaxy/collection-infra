@@ -1,4 +1,5 @@
 .idea/
+.ansible/
 *.tar.gz
 .idea/
 *.tar.gz
