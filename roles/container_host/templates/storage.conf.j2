@@ -1,0 +1,6 @@
+# {{ ansible_managed }}
+
+[engine]
+{% if container_host_volume_path is defined %}
+volume_path="{{ container_host_volume_path }}"
+{% endif %}

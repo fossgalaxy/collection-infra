@@ -5,3 +5,25 @@ podman_socket: "/run/podman/podman.sock"
 # where should we keep bind-mounts?
 podman_bind_dir: "/srv/podman/"
 
+##
+# Table: Engine
+# defaults below taken from containers.conf.5
+##
+
+container_host_conf_enabled: false
+container_host_conf_dir: "/etc/containers/containers.conf.d"
+container_host_conf_path: "{{ container_host_conf_dir }}/10-ansible.conf"
+
+# default network conf
+# container_host_default_network: "podman"
+# container_host_default_subnet: "10.88.0.0/16"
+
+# Override Podman's default_subnet_pools. An empty list leaves the
+# upstream Podman defaults untouched.
+container_host_subnet_pools: []
+
+##
+# Storage directories
+##
+# container_host_volume_path: "/var/lib/containers/storage/volumes"
+container_host_volume_setype: "container_var_lib_t"

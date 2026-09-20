@@ -2,3 +2,5 @@
 
 - include_tasks: install.yml
 
+- include_tasks: custom_volumes.yml
+  when: container_host_volume_path is defined

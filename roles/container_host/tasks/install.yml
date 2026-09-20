@@ -13,3 +13,23 @@
       - podman
     state: present
 
+- name: Copy configuration to host
+  become: true
+  when: container_host_conf_enabled | bool
+  block:
+    - name: Ensure drop directory exists
+      ansible.builtin.file:
+        path: "{{ container_host_conf_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Copy templated podman configuration to host
+      ansible.builtin.template:
+        src: "ansible.conf.j2"
+        dest: "{{ container_host_conf_path }}"
+        owner: root
+        group: root
+        mode: "0644"
+
