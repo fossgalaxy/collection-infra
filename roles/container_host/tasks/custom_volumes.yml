@@ -1,0 +1,35 @@
+---
+
+- name: Define SELinux context for Podman volumes
+  become: true
+  community.general.sefcontext:
+    target: "{{ container_host_volume_path }}(/.*)?"
+    setype: "{{ container_host_volume_setype }}"
+
+- name: Ensure Podman volume directory exists
+  become: true
+  ansible.builtin.file:
+    path: "{{ container_host_volume_path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Restore SELinux context on Podman volume directory
+  become: true
+  ansible.builtin.command:
+    argv:
+      - restorecon
+      - -RF
+      - "{{ container_host_volume_path }}"
+  changed_when: false
+
+- name: Copy templated podman configuration to host
+  become: true
+  when: container_host_conf_enabled | bool
+  ansible.builtin.template:
+    src: "storage.conf.j2"
+    dest: "{{ container_host_conf_dir }}/20-storage.conf"
+    owner: root
+    group: root
+    mode: "0644"

@@ -1,0 +1,23 @@
+# {{ ansible_managed }}
+
+[network]
+{% if container_host_default_network is defined %}
+default_network = "{{ container_host_default_network }}"
+{% endif %}
+
+{% if container_host_default_subnet is defined %}
+default_subnet = "{{ container_host_default_subnet }}"
+{% endif %}
+
+{% if container_host_subnet_pools %}
+default_subnet_pools = [
+{% for pool in container_host_subnet_pools %}
+  { base = "{{ pool.base }}", size = {{ pool.size | default(24) | int }} }{% if not loop.last %},{% endif %}
+{% endfor %}
+]
+{% endif %}
+
+[engine]
+{% if container_host_volume_path is defined %}
+volume_path="{{ container_host_volume_path }}"
+{% endif %}
