@@ -1,0 +1,83 @@
+---
+
+harden_sshd: true
+
+# SSHD
+harden_sshd_allow_root: false
+harden_sshd_allow_passwords: false
+harden_sshd_dropin: "/etc/ssh/sshd_config.d/00-hardening.conf"
+
+harden_sshd_max_auth_tries: 3
+harden_sshd_login_timeout: 30
+
+harden_sshd_client_count: 1
+harden_sshd_client_timeout: 300
+harden_sshd_max_sessions: 10
+
+# OpenSCAP
+harden_oscap: true
+harden_oscap_profile_server: "xccdf_org.ssgproject.content_profile_cis_server_l1"
+harden_oscap_profile_workstation: "xccdf_org.ssgproject.content_profile_cis_workstation_l1"
+
+harden_oscap_profile: "{{ harden_oscap_profile_server }}"
+
+# AIDE
+harden_aide: true
+harden_aide_dropin: "/etc/aide.conf"
+harden_aide_aide_db: "/etc/aide.db"
+
+# Disable odd/unused stuff
+harden_disable_odd_protos: true
+harden_odd_protos: [ 'atm', 'can', 'firewire-core', 'sctp', 'tipc', 'rds', 'dccp']
+
+harden_disable_odd_fs: true
+harden_odd_fs: [ 'cramfs', 'freevxfs', 'hfs', 'hfsplus', 'jffs2', 'udf', 'usb-storage']
+
+# Disable bluetooth (probably not required on servers)
+harden_disable_bluetooth: true
+
+# Harden cron
+harden_cron: true
+
+# Harden sysctl
+harden_sysctl: true
+harden_sysctl_opts:
+  net.ipv6.conf.all.accept_ra: 0
+  net.ipv6.conf.all.accept_redirects: 0
+  net.ipv6.conf.all.accept_source_route: 0
+  net.ipv6.conf.all.forwarding: 0
+  net.ipv6.conf.default.accept_ra: 0
+  net.ipv6.conf.default.accept_redirects: 0
+  net.ipv6.conf.default.accept_source_route: 0
+  net.ipv6.conf.default.forwarding: 0
+  net.ipv4.conf.all.accept_redirects: 0
+  net.ipv4.conf.all.accept_source_route: 0
+  net.ipv4.conf.all.forwarding: 0
+  net.ipv4.conf.all.log_martians: 1
+  net.ipv4.conf.all.rp_filter: 1
+  net.ipv4.conf.all.secure_redirects: 0
+  net.ipv4.conf.default.accept_redirects: 0
+  net.ipv4.conf.default.forwarding: 0
+  net.ipv4.conf.default.log_martians: 1
+  net.ipv4.conf.default.rp_filter: 1
+  net.ipv4.conf.default.secure_redirects: 0
+  net.ipv4.icmp_echo_ignore_broadcasts: 1
+  net.ipv4.icmp_ignore_bogus_error_responses: 1
+  net.ipv4.tcp_syncookies: 1
+  net.ipv4.conf.all.send_redirects: 0
+  net.ipv4.conf.default.send_redirects: 0
+  
+
+# Harden password policies
+harden_pwquality: true
+harden_pwquality_dropin: '/etc/security/pwquality.conf'
+harden_pwquality_minlen: 14
+harden_pwquality_minclass: 4
+harden_pwquality_maxrepeat: 3
+harden_pwquality_maxsequence: 3
+harden_pwquality_difok: 2
+harden_pwquality_dictcheck: true
+
+harden_profile: true
+harden_profile_umask: '027'
+harden_profile_timeout: 900

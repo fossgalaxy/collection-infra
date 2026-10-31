@@ -1,0 +1,30 @@
+# {{ ansible_managed }}
+
+PermitRootLogin {{ harden_sshd_allow_root | bool | ternary('yes', 'no') }}
+PasswordAuthentication {{ harden_sshd_allow_passwords | bool | ternary('yes', 'no') }}
+KbdInteractiveAuthentication {{ harden_sshd_allow_passwords | bool | ternary('yes', 'no') }}
+PubkeyAuthentication yes
+
+# SSH banner
+Banner /etc/issue.net
+
+# Disable insecure options
+IgnoreRhosts yes
+PermitEmptyPasswords no
+HostbasedAuthentication no
+PermitUserEnvironment no
+
+# Timeouts
+ClientAliveCountMax {{ harden_sshd_client_count | int }}
+ClientAliveInterval {{ harden_sshd_client_timeout | int }}
+MaxSessions {{ harden_sshd_max_sessions | int }}
+
+# restrict login times
+MaxStartups 10:30:60
+MaxAuthTries {{ harden_sshd_max_auth_tries | int }}
+LoginGraceTime {{ harden_sshd_login_timeout | int }}
+
+# Lock down features
+X11Forwarding no
+DisableForwarding yes
+LogLevel VERBOSE

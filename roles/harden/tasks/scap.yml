@@ -1,0 +1,7 @@
+---
+
+- name: Install OpenSCAP tool
+  become: true
+  ansible.builtin.dnf:
+    name:
+      - scap-security-guide

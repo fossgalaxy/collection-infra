@@ -1,0 +1,30 @@
+---
+
+- name: Install AIDE
+  become: true
+  ansible.builtin.dnf:
+    name:
+      - aide
+
+- name: Generate AIDE condfiguration
+  ansible.builtin.template:
+    dest: "{{ harden_aide_dropin }}"
+    src: "aide.conf.j2"
+    mode: '0600'
+    owner: root
+    group: root
+
+- name: Build a new AIDE database
+  become: true
+  ansible.builtin.command:
+    argv:
+      - aide
+      - "--init"
+    creates: /etc/aide.db.new
+      
+- name: Ensure that the AIDE db is setup
+  become: true
+  ansible.builtin.copy:
+    remote_src: true
+    src: /etc/aide.db.new
+    dest: "{{ harden_aide_aide_db }}"

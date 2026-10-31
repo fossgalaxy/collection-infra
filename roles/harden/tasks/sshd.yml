@@ -1,0 +1,11 @@
+---
+
+- name: Ensure SSH hardening is applied
+  ansible.builtin.template:
+    dest: "{{ harden_sshd_dropin }}"
+    src: "sshd_config.j2"
+    mode: '0600'
+    owner: root
+    group: root
+    validate: /usr/sbin/sshd -t -f %s
+  notify: Reload sshd

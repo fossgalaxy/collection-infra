@@ -1,0 +1,72 @@
+---
+
+- name: Harden sshd config
+  import_tasks: sshd.yml
+  when: harden_sshd | bool
+  tags: [harden, sshd]
+  
+- name: Configure AIDE
+  import_tasks: aide.yml
+  when: harden_aide | bool
+  tags: [harden, aide]
+
+- name: Configure Cron
+  import_tasks: cron.yml
+  when: harden_cron | bool
+  tags: [harden, cron]
+  
+- name: Disable network modules
+  when: harden_disable_odd_protos | bool
+  become: true
+  ansible.builtin.copy:
+    content: |
+        install {{ item }} /bin/true
+        blacklist {{ item }}
+    dest: /etc/modprobe.d/{{ item }}-blacklist.conf
+  loop: "{{ harden_odd_protos }}"
+  
+- name: Disable fs modules
+  when: harden_disable_odd_fs | bool
+  become: true
+  ansible.builtin.copy:
+    content: |
+        install {{ item }} /bin/false
+    dest: /etc/modprobe.d/{{ item }}-blacklist.conf
+  loop: "{{ harden_odd_fs }}"
+  
+- name: Ensure bluetooth is disabled
+  when: harden_disable_bluetooth | bool
+  become: true
+  ansible.builtin.service:
+    name: bluetooth
+    enabled: false
+    masked: true
+    state: stopped
+    
+- name: Harden sysctl settings
+  when: harden_sysctl | bool
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_set: true
+    state: present
+    reload: true
+  loop: "{{ harden_sysctl_opts | dict2items }}"
+  
+- name: Ensure password hardening is applied
+  when: "{{ harden_pwquality | bool }}"
+  ansible.builtin.template:
+    dest: "{{ harden_pwquality_dropin }}"
+    src: "pwpolicy.conf.j2"
+    mode: '0644'
+    owner: root
+    group: root
+    
+- name: Harden shell profile settings
+  when: harden_profile | bool
+  become: true
+  ansible.builtin.copy:
+    content: |
+        umask {{ harden_profile_umask }}
+        typeset -xr TMOUT={{ harden_profile_timeout | int }}
+    dest: /etc/profile.d/10-ansible.sh
