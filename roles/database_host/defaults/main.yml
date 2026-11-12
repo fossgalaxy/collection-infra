@@ -14,6 +14,10 @@ postgres_packages_debian:
   - postgresql-contrib
   - python3-psycopg2
 
+# disable clustering support?
+postgres_standalone: false
+
+# am I the standby?
 postgres_is_standby: false
 
 # replication connections

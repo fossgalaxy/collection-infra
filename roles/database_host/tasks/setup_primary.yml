@@ -17,14 +17,6 @@
     name: "{{ postgres_service }}"
     state: started
 
-- name: Ensure replication account exists
-  become: true
-  become_user: postgres
-  community.postgresql.postgresql_user:
-    name: "{{ postgres_replica_user }}"
-    password: "{{ postgres_replica_password }}"
-    role_attr_flags: "REPLICATION,NOSUPERUSER,NOCREATEROLE,NOCREATEDB"
-
 - name: Ensure standby file is absent
   become: true
   ansible.builtin.file:
@@ -33,15 +25,25 @@
   notify:
     - Restart PostgreSQL
 
-- name: allow db connections for replication
-  become: true
-  community.postgresql.postgresql_pg_hba:
-    dest: "{{ postgres_hba_path }}"
-    databases: replication
-    contype: "{{ postgres_replica_contype }}"
-    source: "{{ postgres_replica_source }}"
-    method: "{{ postgres_replica_auth }}"
-    users: "{{ postgres_replica_user }}"
+- name: Setup replication
+  when: not postgres_standalone
+  block:
+    - name: Ensure replication account exists
+      become: true
+      become_user: postgres
+      community.postgresql.postgresql_user:
+        name: "{{ postgres_replica_user }}"
+        password: "{{ postgres_replica_password }}"
+        role_attr_flags: "REPLICATION,NOSUPERUSER,NOCREATEROLE,NOCREATEDB"
+    - name: allow db connections for replication
+      become: true
+      community.postgresql.postgresql_pg_hba:
+        dest: "{{ postgres_hba_path }}"
+        databases: replication
+        contype: "{{ postgres_replica_contype }}"
+        source: "{{ postgres_replica_source }}"
+        method: "{{ postgres_replica_auth }}"
+        users: "{{ postgres_replica_user }}"
 
 - name: allow db connections for application servers
   become: true

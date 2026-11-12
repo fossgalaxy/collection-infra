@@ -9,7 +9,7 @@ argument_specs:
       # ---- Core ----
       postgres_replica_password:
         type: str
-        required: true
+        required: "{{ not postgres_standalone | bool }}"
         description: "Password used for syncing between replicas"
 
       # ---- Replication ----
